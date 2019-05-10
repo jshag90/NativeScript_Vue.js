@@ -1,0 +1,8 @@
+{
+  "android": {
+    "v8Flags": "--expose_gc"
+  },
+  "main": "main",
+  "name": "jw_sh_calc_prj",
+  "version": "1.0.0"
+}
