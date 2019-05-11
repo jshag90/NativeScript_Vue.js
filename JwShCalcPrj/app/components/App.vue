@@ -1,10 +1,12 @@
 <template>
     <Page>
-        <ActionBar title="MyCalculator" android:flat="true"/>
+        <ActionBar title="MyCalculator" android:flat="false"/>
         <TabView android:tabBackgroundColor="#53ba82"
                  android:tabTextColor="#c4ffdf"
                  android:selectedTabTextColor="#ffffff"
-                 androidSelectedTabHighlightColor="#ffffff" androidTabsPosition="bottom">
+                 androidSelectedTabHighlightColor="#ffffff" androidTabsPosition="bottom"
+                 @selectedIndexChange="indexChange"
+                 >
             <TabViewItem title="계산기">
                 <GridLayout columns="*, *, *, *" rows="*, *, *, *, *, *, *" backgroundColor="#3c495e">
                     <Label :text="operator" row="0" col="0"  backgroundColor="#ffffff"/>
@@ -40,13 +42,12 @@
             <TabViewItem title="기록" >
                 <ScrollView>
                     <StackLayout class="home-panel">
-                       <button @tap="getModifers()" text="불러오기"/>
-                       <button @tap="allDeleteDB()" text="모두삭제"/>
-                        <ListView class="list-group" for="modifer in modifiersArr" 
-                            style="height:2000px">
+                        <button @tap="allDeleteDB()" text="모두 삭제" class="btn btn-success btn-active" ></button>
+                        <ListView class="list-group" for="modifier in modifiersArr" style="height:2000px" @itemTap="onItemTap" >
                             <v-template>
                                 <FlexboxLayout flexDirection="row" class="list-group-item">
-                                    <Label :text="modifer" class="list-group-item-heading" style="width: 60%" />
+                                    <Label :text="modifier" class="list-group-item-heading" style="width: 80%" />
+                                    <!-- <button text="memo"/> -->
                                 </FlexboxLayout>
                             </v-template>
                         </ListView> 
@@ -58,14 +59,10 @@
 </template>
 
 <script >
-  const appSettings = require("application-settings");
+  const appSettings = require("application-settings")
+  
 
   export default {
-    mounted() {
-      // window.addEventListener('load', () => {
-      //      this.getModifers()
-      // })
-    },
     data() {
       return {
         num: "",
@@ -74,7 +71,8 @@
         evalResStr : "",
         numOperArray : [],
         isCalComplete : 0,
-        modifiersArr : []
+        modifiersArr : [],
+        isSaveData : Boolean
       }
     },
     methods:{
@@ -165,14 +163,16 @@
 
           let data = calModifer+"="+evalRes
           let key = this.makeDbKey()
-          appSettings.setString( key , data);
-          console.log(appSettings.getAllKeys())
+          console.log(key)
+          appSettings.setString(key , data);
+          
       } ,
       displayModifier(){
         let calModifer = ""
-          for(let i=0; i<this.numOperArray.length; i++){
-              calModifer += this.numOperArray[i]
-          }
+        for(let i=0; i<this.numOperArray.length; i++){
+            calModifer += this.numOperArray[i]
+        }
+
         this.evalResStr = calModifer
       },
       excuteAllClear(){
@@ -182,25 +182,52 @@
         this.displayModifier()
       },
       getModifers(){
-        // this.modifers =  appSettings.getString("modifiers");
-        this.modifiersArr = []
-        for(let i=0; i < appSettings.getAllKeys().length ; i++){
-          let keyName = appSettings.getAllKeys()[i]
-          console.log(keyName)
-          this.modifiersArr.push(appSettings.getString(keyName))
+        
+        try{
+          appSettings.setString("" , "");//초기화 코드
+
+          this.modifiersArr = []
+          for(let i=1; i < appSettings.getAllKeys().length; i++){
+            let keyName = appSettings.getAllKeys()[i]
+            this.modifiersArr.push(appSettings.getString(keyName))
+          }
+           this.modifiersArr =  this.modifiersArr.reverse()
+
+        }catch{
+          console.log('초기화 못함')
         }
       
       },
       makeDbKey(){
+        appSettings.setString("" , "");//초기화 코드
         var d = new Date();
-        var result = d.getTime();
+        var result = appSettings.getAllKeys().length
+        // var result = d.getHours()+d.getMinutes()+d.getSeconds();
         console.log('makeDbKey'+result)
         return JSON.stringify(result)
       },
       allDeleteDB(){
         appSettings.clear()
         this.modifiersArr = []
-      }
+      },
+      indexChange: function(args) {
+        if(args.value == 1){
+          this.getModifers()
+        }
+      },
+      onItemTap(event) {
+            console.log(JSON.stringify(event.item))
+
+            var clipboard = require("nativescript-clipboard");   
+            const Toast = require('nativescript-toast');
+
+            clipboard.setText(event.item).then(function() {
+              console.log("OK, copied to the clipboard");
+              Toast.makeText('수식이 복사되었습니다.', 'long').show();
+            })
+
+
+        }
       
     }
   }
@@ -222,5 +249,20 @@
 
     .numberBtn{
         color: #ffffff;
+    }
+
+    .my-button {
+      background-color: #68e6a1;
+      border-radius: 5;
+      color: white;
+      font-family: FontAwesome;
+      font-size: 19;
+      vertical-align: middle;
+      width: 100%;
+    }
+
+    .my-button:active {
+      background-color: lightslategray;
+      color:white;
     }
 </style>
