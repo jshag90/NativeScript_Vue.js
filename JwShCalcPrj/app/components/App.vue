@@ -8,6 +8,7 @@
                  @selectedIndexChange="indexChange"
                  >
             <TabViewItem title="계산기">
+
                 <GridLayout columns="*, *, *, *" rows="*, *, *, *, *, *, *" backgroundColor="#3c495e">
                     <Label :text="operator" row="0" col="0"  backgroundColor="#ffffff"/>
                     <Label :text="num" row="0" col="1" colSpan="4" backgroundColor="#ffffff" style="text-align:right;font-size:24px;"/>
