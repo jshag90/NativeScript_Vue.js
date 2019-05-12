@@ -103,11 +103,17 @@
         }
         else if(data === '='){
           
-
           this.evalModifier()
           this.displayModifier()
           this.isCalComplete = 1
 
+        }
+        else if(data == '+/-'){
+          this.num = this.num * -1
+
+        }
+        else if(data == '%'){ 
+          this.num = this.num / 100;
         }
         else{
 
