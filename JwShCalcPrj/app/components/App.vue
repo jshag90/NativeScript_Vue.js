@@ -39,16 +39,16 @@
                     <button @tap="fn_calData('.')" text="." row="6" col="2" backgroundColor="#2E2E2E" class="numberBtn"/>
                     <button @tap="fn_calData('=')" text="=" row="6" col="3" backgroundColor="#FF8000"/>
                 </GridLayout>
+
             </TabViewItem>
             <TabViewItem title="기록" >
                 <ScrollView>
                     <StackLayout class="home-panel">
-                        <button @tap="allDeleteDB()" text="모두 삭제" class="btn btn-success btn-active" ></button>
+                        <button @tap="allDeleteDB()" text="모두 삭제" class="listBtn" ></button>
                         <ListView class="list-group" for="modifier in modifiersArr" style="height:2000px" @itemTap="onItemTap" >
                             <v-template>
                                 <FlexboxLayout flexDirection="row" class="list-group-item">
-                                    <Label :text="modifier" class="list-group-item-heading" style="width: 80%" />
-                                    <!-- <button text="memo"/> -->
+                                    <Label :text="modifier" class="list-group-item-heading" style="width: 100%" />
                                 </FlexboxLayout>
                             </v-template>
                         </ListView> 
@@ -61,7 +61,69 @@
 
 <script >
   const appSettings = require("application-settings")
-  
+
+  const DetailHistoryPage = {
+        data(){
+          return{
+            memo : ""
+          }
+        },
+        props: ["modifier","modifierKey","itemMemoData"],
+        methods: {
+            onButtonTap() {
+                this.$navigateBack();
+            },
+            onCopyTap(){
+              const clipboard = require("nativescript-clipboard");   
+              clipboard.setText(this.modifier).then(function() {
+                  const Toast = require('nativescript-toast');
+                  Toast.makeText('수식이 복사되었습니다.', 'long').show();
+               })
+
+            },
+            onSaveMemo(msg){
+
+              appSettings.setString("" , "");//초기화 코드
+              let key = this.modifierKey+".memo"
+              appSettings.setString(key , this.memo);//초기화 코드
+              console.log("메모저장 key값"+key)
+              console.log("메모 : "+this.memo)
+              this.itemMemoData = this.memo
+              this.displayToast('메모가 '+msg+'되었습니다.')
+
+            },
+            displayToast(msg){
+              const Toast = require('nativescript-toast');
+              Toast.makeText(msg, 'long').show();
+
+            }
+            
+        },
+        template: `
+            <Page>
+                <ActionBar title="MyCalculator" android:flat="false" backgroundColor="#43b883" style="color:#ffffff;"/>
+                <StackLayout> 
+                   수식 : <Label :text = "modifier"/>
+                   메모 : <Label :text = "itemMemoData"/>
+                   <TextField hint="메모를 입력하세요." v-model="memo"/>
+                    <button text="수식복사"  @tap="onCopyTap" class="listBtn"/> 
+                    <button v-if="itemMemoData != null" text="메모수정"  @tap="onSaveMemo('수정')" class="listBtn"/> 
+                    <button v-else text="메모저장" @tap="onSaveMemo('저장')" class="listBtn"/> 
+                    <button text="뒤로가기"  @tap="onButtonTap" class="listBtn"/>
+                </StackLayout>
+                  <StackLayout class="home-panel">
+                    <Label text = " 수식" height="20" backgroundColor="#3c495e" style="color: #ffffff;"/>
+                    <Label :text = "modifier" height="50" backgroundColor="#D8D8D8"/>
+                    <Label text = " 메모" height="20" backgroundColor="#3c495e" style="color: #ffffff;"/>
+                    <Label :text = "itemMemoData" height="70" backgroundColor="#D8D8D8"/>
+                    <TextField hint="메모를 입력하세요." v-model="memo" height="50"/>
+                    <button v-if="itemMemoData != null" text="메모수정"  @tap="onSaveMemo('수정')" backgroundColor="#2E2E2E" style="color: #ffffff;"/> 
+                    <button v-else text="메모저장" @tap="onSaveMemo('저장')" backgroundColor="#2E2E2E" style="color: #ffffff;"/> 
+                    <button text="수식복사"  @tap="onCopyTap" backgroundColor="#2E2E2E" style="color: #ffffff;"/> 
+                    <button text="뒤로가기"  @tap="onButtonTap" backgroundColor="#2E2E2E" style="color: #ffffff;"/>
+                </WrapLayout>
+            </Page>`
+    };
 
   export default {
     data() {
@@ -111,7 +173,6 @@
         }
         else if(data == '+/-'){
           this.num = this.num * -1
-
         }
         else if(data == '%'){ 
           this.num = this.num / 100;
@@ -130,9 +191,9 @@
 
       },
       alertTest(data){
-        var dialogs = require("tns-core-modules/ui/dialogs");
+        var dialogs = require("tns-core-modules/ui/dialogs")
         dialogs.alert(data).then(function() {
-            console.log("Dialog closed!");
+            console.log("Dialog closed!")
         });
       },
       isNumber(s) {
@@ -196,7 +257,12 @@
           this.modifiersArr = []
           for(let i=1; i < appSettings.getAllKeys().length; i++){
             let keyName = appSettings.getAllKeys()[i]
-            this.modifiersArr.push(appSettings.getString(keyName))
+            console.log(keyName+':'+appSettings.getString(keyName))
+            var chkName = ""
+            chkName = keyName
+            if(chkName.includes(".") == false){
+              this.modifiersArr.push(appSettings.getString(keyName))
+            }
           }
            this.modifiersArr =  this.modifiersArr.reverse()
 
@@ -206,10 +272,9 @@
       
       },
       makeDbKey(){
-        appSettings.setString("" , "");//초기화 코드
         var d = new Date();
+        appSettings.setString("" , "");//초기화 코드
         var result = appSettings.getAllKeys().length
-        // var result = d.getHours()+d.getMinutes()+d.getSeconds();
         console.log('makeDbKey'+result)
         return JSON.stringify(result)
       },
@@ -223,15 +288,31 @@
         }
       },
       onItemTap(event) {
-            console.log(JSON.stringify(event.item))
 
-            var clipboard = require("nativescript-clipboard");   
-            const Toast = require('nativescript-toast');
+          appSettings.setString("" , "");//초기화 코드
 
-            clipboard.setText(event.item).then(function() {
-              console.log("OK, copied to the clipboard");
-              Toast.makeText('수식이 복사되었습니다.', 'long').show();
-            })
+          let itemKey = ""
+          for(let i=1; i < appSettings.getAllKeys().length; i++){
+            let keyName = appSettings.getAllKeys()[i]
+            if(appSettings.getString(keyName) == event.item)
+            itemKey = keyName
+          }
+
+          appSettings.setString("" , "");//초기화 코드
+          let memoKey = itemKey+'.memo'
+          let itemMemo = ""
+          itemMemo = appSettings.getString(memoKey)
+          console.log("불러온 메모 데이터: "+itemMemo)
+
+          console.log('test.index :'+event.index)
+          this.$navigateTo(DetailHistoryPage, {
+                props: {
+                    modifierKey : itemKey,
+                    modifier: event.item,
+                    itemMemoData : itemMemo
+                }
+            }
+          );
 
 
         }
@@ -240,6 +321,7 @@
   }
  
 </script>
+
 
 <style scoped>
     ActionBar {
@@ -272,4 +354,17 @@
       background-color: lightslategray;
       color:white;
     }
+
+    .listBtn{
+      background-color: #53ba82; /* Green */
+      border: none;
+      color: white;
+      padding: 8px 2px;
+      text-align: center;
+      text-decoration: none;
+      /* display: inline-block; */
+      font-size: 13px;
+    }
+
+
 </style>
